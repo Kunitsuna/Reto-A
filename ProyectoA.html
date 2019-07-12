@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Example</title>
+	<script type="text/javascript" src="https://gc.kis.v2.scr.kaspersky-labs.com/FD126C42-EBFA-4E12-B309-BB3FDD723AC1/main.js" charset="UTF-8"></script><script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+	<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+	<script src="https://www.paypal.com/sdk/js?client-id=sb&currency=MXN"></script>
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css">
+	<script>
+		var username = 'test@test.test';
+		var pass = 'test';
+		var table;
+
+		var search='a';
+		var nextPageToken = "CkIKGgoEbmFtZRISGhBhY2VpdGUgZGUgY2Fub2xhEiBqC3N-YXZlbmEtZGV2chELEgRGb29kGICAgIC838gJDBgAIAA";
+		
+		$(document).ready(function(){
+		//	$.fn.dataTable.ext.errMode = 'none';
+			peticion(search, nextPageToken);
+
+			$("#btnBuscar").on("click", function(){
+				var buscar = $("#search").val();
+				search = buscar;
+				table.ajax.url("https://avena-dev.appspot.com/_ah/api/food/v1/food/smae?limit=10&search="+search+"&nextPageToken=").load();
+			});
+
+			$("#btnSigPag").on("click", function(){
+				var token = $(this).attr("temp");
+				nextPageToken = token;
+				table.ajax.url("https://avena-dev.appspot.com/_ah/api/food/v1/food/smae?limit=10&search="+search+"&nextPageToken="+nextPageToken).load();
+				//table.ajax.reload();
+			});
+		});
+
+		var peticion = function(search, nextPageToken){
+			
+			table = $('#myTable').DataTable({
+				ajax: {
+					url: "https://avena-dev.appspot.com/_ah/api/food/v1/food/smae?limit=10&search="+this.search+"&nextPageToken="+this.nextPageToken,
+					dataSrc: 'items',
+					headers:{
+					"Authorization": "Basic " + btoa(username + ":" + pass)
+					},
+					complete: function(data){
+						$("#btnSigPag").attr("temp", data.responseJSON.nextPageToken);
+					}
+				},
+				columns:[
+					 { data: 'name' },
+					 { data: 'energyCal' },
+					 { data: 'energyJ' },
+					 { data: 'type' },
+					 { data: 'unity' }
+				],
+				"paging": false,
+				"searching": false
+			});
+			//
+		}
+
+		paypal.Buttons({
+
+            // Set up the transaction
+            createOrder: function(data, actions) {
+                return actions.order.create({
+                    purchase_units: [{
+                        amount: {
+                            value: '0.01'
+                        }
+                    }]
+                });
+            },
+
+            // Finalize the transaction
+            onApprove: function(data, actions) {
+                return actions.order.capture().then(function(details) {
+                    // Show a success message to the buyer
+                    alert('Transaction completed by ' + details.payer.name.given_name + '!');
+                });
+            },
+            style: {
+                color:  'blue',
+                shape:  'pill',
+                label:  'pay',
+                height: 40
+            },
+            
+
+
+        }).render('#paypal-button-container');
+	</script>
+</head>
+<body>
+	<label for="search">Buscar: </label>
+	<input type="text" id="search">
+	<button id="btnBuscar">Buscar</button>
+	<table id="myTable" class="cell-border display" style="width:100%">
+		<thead>
+			<th>Name</th>
+			<th>Energy Cal</th>
+			<th>Energy J</th>
+			<th>Type</th>
+			<th>Unity</th>
+		</thead>
+	</table>
+	<br />
+	<button temp="" id="btnSigPag">Siguiente página.</button>
+
+	<div id="paypal-button-container"></div>
+</body>
+</html>
